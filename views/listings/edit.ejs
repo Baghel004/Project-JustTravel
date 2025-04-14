@@ -1,0 +1,32 @@
+<%- layout("/layouts/boilerplate.ejs") %>
+<body>
+    <form method="POST" action="/listings/<%= listing._id %>?_method=PUT" class="form" enctype="multipart/form-data">
+        <h1>Edit Listing</h1>
+        <div class="formitems">
+            Title
+            <input name="listing[title]" value="<%= listing.title %>"  type="text" required>
+        </div>
+        <div class="formitems">
+            Description
+            <textarea name="listing[description]"  required><%= listing.description %></textarea>
+        </div>
+        <div style="margin-right: 50rem;">
+            <img src="<%=finalurl%>" alt="img">
+        </div>
+        <div class="formitems ">
+            Upload Image 
+            <input name="listing[image]" value="<%= listing.image.url %>" type="file" style="font-size: 1.4rem; height: 4rem;  "  required>
+        </div>
+        <div class="formitems twoitems">
+            Price
+            <input name="listing[price]" value="<%= listing.price %>" type="number" style="margin-bottom: 2rem;" required>
+            Location
+            <input name="listing[location]" value="<%= listing.location %>" type="text" required>
+        </div>
+        <div class="formitems">
+            Country
+            <input name="listing[country]" value="<%= listing.country %>" type="text" required>
+        </div>
+        <button class="btn">Edit</button>
+    </form>
+</body>

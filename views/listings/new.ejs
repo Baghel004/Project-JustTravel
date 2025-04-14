@@ -1,0 +1,39 @@
+<%- layout("layouts/boilerplate.ejs") %>
+<body>
+  
+    <form class="form" method="POST" action="/listings" enctype="multipart/form-data">
+        <h1>Create New Listing</h1>
+        <div class="formitems">
+            Title
+            <br>
+            <input name="listing[title]" placeholder="Enter title" type="text" required>
+        </div>
+        <div class="formitems">
+            Description
+            <textarea name="listing[description]" placeholder="Enter description" required></textarea>
+        </div>
+        <div class="formitems">
+            Upload Image
+            <input name="listing[image]"  type="file" style="font-size: 1.5rem; height: 2.3rem;  font-weight: 200;" required> 
+        </div>
+        <div class="formitems twoitem">
+            <div class="leftdiv">
+                Price
+                <input name="listing[price]" placeholder="Enter Price"  required>
+            </div>
+           
+            <div class="rightdiv">
+                Location
+                <input name="listing[location]" placeholder="Enter location" type="text" required>
+            </div>
+                
+        </div>
+        <div class="formitems">
+            Country
+            <input name="listing[country]" placeholder="Enter country" type="text" required>
+        </div>  
+        <button class="btn">Add</button>
+
+
+    </form>
+</body>

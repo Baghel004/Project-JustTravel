@@ -1,0 +1,41 @@
+footer{
+    width: 100%;
+    background: rgb(227, 225, 225);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    position:relative;
+    margin-top: 30px;
+    
+    
+}
+
+.footeritem1{
+    margin-top: 15px;
+    margin-bottom: 5px;
+    display: flex;
+    gap: 3rem;
+
+    
+
+}
+.right i{
+    font-size: 1rem;
+    margin-right: 0.5rem;
+
+}
+
+.footeritem2{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    
+}
+
+.downdiv a{
+    margin: 0.8rem;
+}

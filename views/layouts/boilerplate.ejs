@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wanderlust</title>
+    <link rel="stylesheet" href="/css/style.css">
+
+    <% if (typeof cardsCss !== "undefined") { %>
+        <link rel="stylesheet" href="/css/cards.css">
+    <% } %>
+
+    <% if (typeof newCss !== "undefined") { %>
+        <link rel="stylesheet" href="/css/new.css">
+    <% } %>
+
+    <% if (typeof editCss !== "undefined") { %>
+        <link rel="stylesheet" href="/css/edit.css">
+    <% } %>
+    <% if (typeof showCss !== "undefined") { %>
+        <link rel="stylesheet" href="/css/show.css">
+    <% } %>
+    <% if (typeof errorCss !== "undefined") { %>
+        <link rel="stylesheet" href="/css/error.css">
+    <% } %>
+    <% if (typeof signupCss !== "undefined") { %>
+        <link rel="stylesheet" href="/css/signup.css">
+    <% } %>
+    <script src="https://kit.fontawesome.com/36a6b61b18.js" crossorigin="anonymous"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js"></script>
+</head>
+<body>
+    <%- include("../includes/navbar.ejs") %>
+    <%- include("../includes/flash.ejs") %>
+    <%- include("../includes/error.ejs") %>
+    <div class="container">
+        
+        <%- body %>
+    </div>
+    <%- include("../includes/footer.ejs") %>
+
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+.signContainer{
+    margin: auto;
+    margin-top: 4rem;
+    width: 35vw;
+    height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    font-size: 1.6rem;
+    border: 0.5px solid rgb(204, 204, 184);
+    background: rgb(235, 235, 232);
+    
+}
+
+.input-c{
+    width: 22rem;
+    padding: 1rem;
+    padding-left: 1.5rem;
+    font-size: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+.btn{
+    background: rgb(238, 59, 92);
+    min-width: 8rem;
+    font-size: 1.4rem;
+    margin: 0.3rem 1.5rem;
+    color: white;
+    border-radius: 5px;
+    padding: 1rem;
+    margin-left: 31%;
+
+}

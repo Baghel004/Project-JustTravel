@@ -1,0 +1,58 @@
+
+.container{
+    min-height: 80%;
+    display: flex;
+    box-sizing: border-box;
+}
+
+.form{
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    width: 100%;
+    align-items: center;
+    font-size: 1.2rem;
+ 
+}
+.formitems{
+    width: 60%;
+    
+}
+
+
+.twoitem{
+    display: flex;
+    gap: 15px;
+    justify-content: space-between;
+}
+
+.form div input{
+    height: 2rem;
+    text-align: center;
+    border-radius: 8px;
+    border: 2px solid black; 
+    width: 100%;
+    font-size: 1rem;
+}
+.form div input {
+    height: 100%;
+}
+textarea{
+    
+    height: 5rem;
+    border-radius: 8px;
+    border: 2px solid black;
+    text-align: center;
+    padding-top: 32px;
+    width: 100%;
+    font-size: 1.2rem;
+    
+}
+
+.btn{
+    font-size: 1.3rem;
+    width: 100px;
+    background: rgb(238, 59, 92);
+    padding: 10px;
+    margin-top: 1rem;
+}

@@ -1,0 +1,31 @@
+<link rel="stylesheet" href="/css/navbar.css">
+<nav class="navbar">
+        <div class="navbarstart">
+                <img class="navimg"  src="/airbnb.png" alt="airbnb">
+                <a style="font-size: 1.5rem; " href="/listings">Home</a>
+        </div>
+
+        <div class="navcenter">
+            <input type="text" placeholder="Search" class="search">
+            <button class="btn1" style="height: 40%;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+
+        </div>
+        <div class="navend">
+            <div >
+                <a href="/listings/new">airbnb your home</a>
+            </div>
+            <%if(!currUser){ %>
+                <a href="/signup" class="endimg1">Signup</a>
+                <a href="/login" class="contact">Login</a>
+            <%}%>
+            <%if(currUser){%>
+                <a href="/logout" class="endimg1">Logout</a>
+            <%}%>
+               
+               
+           
+        </div>       
+    </nav>
+    

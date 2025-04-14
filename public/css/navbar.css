@@ -1,0 +1,71 @@
+    nav{
+        box-sizing: border-box;
+        background: rgb(227, 225, 225);
+        display: flex;
+        height: min(70px);
+        justify-content: space-around;
+        align-items: center;
+        font-size: 1.2rem;
+        gap: 10px;
+        margin-bottom: 2rem;
+        position:fixed;
+        width: 100%;
+        top: 0;
+        border-bottom: 1px solid rgb(87, 86, 86);
+        z-index: 3;
+
+        display: wrap;
+        
+    }
+    a{
+        text-decoration: none;
+        color: black;
+    }
+
+    .navbarstart{
+        display: flex;
+        height: 60%;
+        padding: 10px;
+        gap: 20px;
+        
+        margin-right: 10px;
+    }
+
+    .navimg{
+        height: 100%;
+        width: 100%;
+        object-fit: contain;
+        
+    }
+
+    .navcenter{
+        display: flex;
+        gap: 5px;
+        padding: 10px;
+        align-items: center;
+        
+    }
+
+    .navend{
+        display: flex;
+        gap: 1rem;
+    }
+
+    .search{
+        width: 80%;
+        height: 20%;
+        border-radius: 10px;
+        padding: 0.4rem;
+        padding-left: 1rem;
+        font-size: 1.2rem;
+    }
+
+    .btn1{
+        background: rgb(238, 59, 92);
+        min-width: 4rem;
+        font-size: 1rem;
+        margin: 0.3rem 1.5rem;
+        color: white;
+        border-radius: 5px;
+        padding: 0.5rem;
+    }

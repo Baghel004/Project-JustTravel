@@ -1,0 +1,104 @@
+ <%- layout("layouts/boilerplate.ejs"); %>
+
+ <body>
+    <div class="allIcons">
+        <div class="oneIcon">
+            <i class="fa-solid fa-fire"></i>
+            <p>Trending<p>
+
+        </div>
+        <div class="oneIcon">
+            <i class="fa-solid fa-bed"></i>
+            <p>Rooms<p>
+
+        </div>
+        <div class="oneIcon">
+            <i class="fa-solid fa-city"></i>
+            <p>Iconic Cities<p>
+
+        </div>
+        <div class="oneIcon">
+            <i class="fa-solid fa-mountain"></i>
+            <p>Mountains<p>
+        </div>
+        <div class="oneIcon">
+            <i class="fa-solid fa-chess-rook"></i>
+            <p>Castles<p>
+        </div>
+        <div class="oneIcon">
+            <i class="fa-solid fa-person-swimming"></i>
+            <p>Amazing pools<p>
+        </div>
+        <div class="oneIcon">
+            <i class="fa-solid fa-campground"></i>
+            <p>Camping<p>
+        </div>
+        <div class="oneIcon">
+            <i class="fa-solid fa-cow"></i>
+            <p>Farms<p>
+        </div>
+        
+        <div class="oneIcon">
+            <i class="fa-solid fa-snowflake"></i>
+            <p>Arctic<p>
+        </div>
+        <div class="oneIcon">
+            <i class="fa-solid fa-igloo"></i>
+            <p>Domes<p>
+        </div>
+        <div class="oneIcon">
+            <i class="fa-solid fa-sailboat"></i>
+            <p>Boats<p>
+        </div>
+        <div class="oneIcon" style="border: 1px solid black; border-radius: 30px; position:relative; top: -12px; margin-left: 4rem; ">
+            <div class="tax">
+                <p><b>Display Taxes</b></p>
+                <label class="switch">
+                    <input id="swit" type="checkbox">
+                    <span class="slider"></span>
+                  </label>
+            </div>
+       
+        </div>
+    </div>
+    <div class="container1">
+        <% for(let listing of allListings){ %>
+            <a href="/listings/<%= listing._id%>">
+                <div class="cardcontainer">
+                    <div class="imgdiv">
+                        <img class="cardimg" src="<%= listing.image.url%>" alt="Image">
+                    </div>
+                    <div class="contentdiv">   
+                            <span><%=listing.location%>, <%=listing.country%></span>
+                            <br>
+                            <span>&#8377; <%= listing.price.toLocaleString("en-IN") %> / night</span>
+                            &nbsp; &nbsp;
+                            <span><i class="tax-info" style="display: none;">18% taxes</i></span>                    
+                    </div>
+                </div>
+            </a>
+            <% } %>
+    </div>
+    
+          
+</body>
+
+<script>
+    let taxswitch = document.querySelector("#swit");
+    taxswitch.addEventListener("click",()=>{
+        let checks = document.querySelectorAll(".tax-info");
+        for (check of checks){
+
+        if(check.style.display != "inline"){
+            check.style.display = "inline";
+        }else{
+            check.style.display = "none";
+        }}
+    })
+   
+
+</script>
+
+
+
+   

@@ -1,0 +1,20 @@
+<%- layout("/layouts/boilerplate.ejs") %>
+<div class="signContainer">
+    <h1><span style="color: rgb(238, 59, 92);">L</span>ogin</h1>
+    <div>
+        <form action="/login" method="POST">
+            <div>
+            <label for="username"></label>
+            <input class="input-c" type="text" id="username" name="username" placeholder="username" required>
+            </div>
+
+            <div>
+            <label for="password"></label>
+            <input class="input-c" type="password" id="password" name="password" placeholder="password" required>
+            </div>
+
+            <button  class="btn" type="submit" >Login</button>
+
+        </form>
+    </div>
+</div>
