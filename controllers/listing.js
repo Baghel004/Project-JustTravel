@@ -1,6 +1,6 @@
 const Listing = require('../models/listing')
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
-const map_token = JSON.stringify(process.env.MAP_TOKEN);
+const map_token = (process.env.MAP_TOKEN);
 const geocodingClient= mbxGeocoding({ accessToken: map_token });
 
 
@@ -24,11 +24,12 @@ module.exports.NewRoute = async (req, res, next) => {
 
 module.exports.createRoute = async (req, res, next) => {
     try {
+        console.log('request gone')
         const response = await geocodingClient.forwardGeocode({
             query: req.body.listing.location,
             limit: 2
           }).send()
-
+       
         const geo =  response.body.features[0].geometry;
         const url = req.file.path;
         const filename = req.file.filename;
