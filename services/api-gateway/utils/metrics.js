@@ -6,7 +6,7 @@
 const client = require('prom-client');
 
 const register = new client.Registry();
-register.setDefaultLabels({ app: 'wanderlust' });
+register.setDefaultLabels({ app: 'wanderlust', service: 'api-gateway' });
 client.collectDefaultMetrics({ register });
 
 const httpDuration = new client.Histogram({
