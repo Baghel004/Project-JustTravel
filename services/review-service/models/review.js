@@ -15,16 +15,15 @@ const reviewSchema = new Schema({
         type: Date,
         default: Date.now, // function ref, evaluated per-document (was Date.now() — a bug)
     },
-    // Reviews reference their listing and author by id. authorUsername is denormalized
-    // for display so the gateway never needs a per-review lookup to the user-service.
+    // Reviews reference their listing and author by id only (those live in other services'
+    // databases, so no populate — refs are omitted). authorUsername is denormalized for
+    // display so the gateway never needs a per-review lookup to the user-service.
     listingId: {
         type: Schema.Types.ObjectId,
-        ref: "Listing",
         required: true,
     },
     authorId: {
         type: Schema.Types.ObjectId,
-        ref: "User",
     },
     authorUsername: {
         type: String,

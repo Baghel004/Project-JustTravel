@@ -1,21 +1,19 @@
-const Review = require('../models/review.js');
-const Listing = require('../models/listing.js');
+// Gateway review proxy → review-service.
+const { REVIEW_SERVICE_URL, identityHeaders } = require('../utils/http');
 
 module.exports.createReview = async (req, res, next) => {
     try {
         const { id } = req.params; // listing id
-        const listing = await Listing.findById(id);
-        if (!listing) {
-            req.flash("error", "Listing does not exist");
-            return res.redirect("/listings");
-        }
-        const newReview = new Review({
-            ...req.body.review,
-            listingId: id,
-            authorId: req.user._id,
-            authorUsername: req.user.username, // denormalized for display
+        const r = await fetch(`${REVIEW_SERVICE_URL}/reviews`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...identityHeaders(req) },
+            body: JSON.stringify({ listingId: id, review: req.body.review }),
         });
-        await newReview.save();
+        if (!r.ok) {
+            const e = await r.json().catch(() => ({}));
+            req.flash("error", e.error || "Could not create review");
+            return res.redirect(`/listings/${id}`);
+        }
         req.flash("success", "Review Created");
         res.redirect(`/listings/${id}`);
     } catch (err) {
@@ -23,15 +21,21 @@ module.exports.createReview = async (req, res, next) => {
     }
 };
 
-module.exports.deleteReview = async (req, res) => {
-    const { id, reviewId } = req.params;
+module.exports.deleteReview = async (req, res, next) => {
     try {
-        await Review.findByIdAndDelete(reviewId);
+        const { id, reviewId } = req.params;
+        const r = await fetch(`${REVIEW_SERVICE_URL}/reviews/${reviewId}`, {
+            method: 'DELETE',
+            headers: identityHeaders(req),
+        });
+        if (!r.ok) {
+            const e = await r.json().catch(() => ({}));
+            req.flash("error", e.error || "Something went wrong while deleting the review.");
+            return res.redirect(`/listings/${id}`);
+        }
         req.flash("success", "Review deleted");
         res.redirect(`/listings/${id}`);
     } catch (err) {
-        console.error(err);
-        req.flash("error", "Something went wrong while deleting the review.");
-        res.redirect(`/listings/${id}`);
+        next(err);
     }
 };
