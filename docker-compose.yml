@@ -1,0 +1,80 @@
+# Runs the whole Wanderlust stack locally with one command: `docker compose up --build`.
+# Databases are MongoDB Atlas (external) — supplied via the root .env file, not run here.
+# Services reach each other by service name on the default compose network.
+
+services:
+  user-service:
+    build: ./services/user-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+      - USERS_DB_URL=${USERS_DB_URL}
+      - JWT_SECRET=${JWT_SECRET}
+    expose:
+      - "4001"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  review-service:
+    build: ./services/review-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4003
+      - REVIEWS_DB_URL=${REVIEWS_DB_URL}
+    expose:
+      - "4003"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4003/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  listing-service:
+    build: ./services/listing-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4002
+      - LISTINGS_DB_URL=${LISTINGS_DB_URL}
+      - REVIEW_SERVICE_URL=http://review-service:4003
+      - MAP_TOKEN=${MAP_TOKEN}
+      - CLOUD_NAME=${CLOUD_NAME}
+      - CLOUD_API_KEY=${CLOUD_API_KEY}
+      - CLOUD_API_SECRET=${CLOUD_API_SECRET}
+    expose:
+      - "4002"
+    depends_on:
+      - review-service
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4002/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  api-gateway:
+    build: ./services/api-gateway
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - JWT_SECRET=${JWT_SECRET}
+      - USER_SERVICE_URL=http://user-service:4001
+      - LISTING_SERVICE_URL=http://listing-service:4002
+      - REVIEW_SERVICE_URL=http://review-service:4003
+      - MAP_TOKEN=${MAP_TOKEN}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-service
+      - listing-service
+      - review-service
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped

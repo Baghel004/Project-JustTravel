@@ -30,6 +30,7 @@ app.use(cookieParser());
 // --- Observability: time every request; expose Prometheus metrics ---
 app.use(metricsMiddleware);
 app.get('/metrics', metricsHandler);
+app.get('/health', (req, res) => res.json({ status: 'ok', service: 'api-gateway' }));
 
 // --- Cookie-based flash (replaces connect-flash; no session store needed) ---
 app.use(cookieFlash);
