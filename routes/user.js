@@ -1,20 +1,16 @@
 const express = require('express');
-const User = require('../models/user');
 const router = express.Router();
-const passport = require('passport')
-const UserController = require('../controllers/user.js')
+const UserController = require('../controllers/user.js');
 
-router.get('/signup',UserController.showSignup)
+router.get('/signup', UserController.showSignup);
 
-router.post('/signup',UserController.doSignup)
+router.post('/signup', UserController.doSignup);
 
-router.get("/login",UserController.showLogin)
+router.get("/login", UserController.showLogin);
 
-router.post("/login",passport.authenticate(
-    'local',{failureRedirect:"/login",failureFlash:true
-    }
-),UserController.authenicateUser)
+// Auth is verified inside the controller (JWT issued), replacing passport.authenticate.
+router.post("/login", UserController.login);
 
-router.get("/logout",UserController.doLogout)
+router.get("/logout", UserController.doLogout);
 
-module.exports= router;
+module.exports = router;

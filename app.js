@@ -1,105 +1,84 @@
-if(process.env.NODE_ENV != "production"){
-    require("dotenv").config()
+if (process.env.NODE_ENV != "production") {
+    require("dotenv").config();
 }
-
 
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
 const dbUrl = process.env.MONGO_URL;
-const path  = require('path');
+const path = require('path');
 const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
-app.set("view engine","ejs");
-app.engine("ejs",ejsMate);
-app.set("views",path.join(__dirname,"views"));
-app.use(express.urlencoded({extended:true}));
-app.use(express.json());
-app.use(methodOverride("_method"));
-app.use(express.static(path.join(__dirname,"public")));
+const cookieParser = require('cookie-parser');
 
 const ExpressError = require("./utils/expressError.js");
-const reviewRouter = require('./routes/review.js')
+const { verifyToken, COOKIE } = require('./utils/jwt.js');
+const cookieFlash = require('./utils/flash.js');
+const { metricsMiddleware, metricsHandler } = require('./utils/metrics.js');
+
+const reviewRouter = require('./routes/review.js');
 const listingRouter = require('./routes/listing.js');
-const userRouter = require('./routes/user.js')
+const userRouter = require('./routes/user.js');
 
+app.set("view engine", "ejs");
+app.engine("ejs", ejsMate);
+app.set("views", path.join(__dirname, "views"));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(methodOverride("_method"));
+app.use(express.static(path.join(__dirname, "public")));
+app.use(cookieParser());
 
-const session = require('express-session');
-const MongoStore = require('connect-mongo');
-const flash = require('connect-flash');
-const passport = require('passport');
-const passportLocal = require("passport-local");
-const User = require('./models/user.js');
+// --- Observability: time every request; expose Prometheus metrics ---
+app.use(metricsMiddleware);
+app.get('/metrics', metricsHandler);
 
-const store =  MongoStore.create({
-    mongoUrl: dbUrl,
-    crypto: {
-      secret:  process.env.SECRET
-    },
-    touchAfter:24*3600,
-  });
+// --- Cookie-based flash (replaces connect-flash; no session store needed) ---
+app.use(cookieFlash);
 
-  store.on("error",(err)=>{
-    console.log("error in mongo session store",err)
-  })
-
-const sessionOptions = {
-    store,
-    secret: process.env.SECRET,
-    resave:false,
-    saveUninitialized:true,
-    cookie:{
-        expires:Date.now()+7*24*60*60*1000,
-        maxAge:7*24*60*60*1000,
-        httpOnly:true,
+// --- Auth: populate req.user from the JWT cookie (replaces passport session) ---
+app.use((req, res, next) => {
+    const token = req.cookies[COOKIE];
+    if (token) {
+        try {
+            const payload = verifyToken(token);
+            req.user = { _id: payload.sub, username: payload.username };
+        } catch (e) {
+            res.clearCookie(COOKIE); // expired/invalid token
+            req.user = null;
+        }
+    } else {
+        req.user = null;
     }
-}
-
-app.use(session(sessionOptions))
-app.use(flash());
-
-
-app.use(passport.initialize());
-app.use(passport.session());
-passport.use(new passportLocal.Strategy(User.authenticate()));
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
-
-app.use((req,res,next)=>{
-    if(req.session.redirectUrl){
-        res.locals.redirectUrl = req.session.redirectUrl;
-    }
-    res.locals.success = req.flash("success");
-    res.locals.error = req.flash("error");
-    res.locals.currUser = req.user|| null;
+    res.locals.currUser = req.user;
+    res.locals.redirectUrl = req.cookies.redirectUrl || null;
     next();
-})
+});
 
-
-const connectDb = async function(){
-    try{
-        const connect = await mongoose.connect(dbUrl);
-        console.log("connceted to db");
-    }catch(err){
+const connectDb = async function () {
+    try {
+        await mongoose.connect(dbUrl);
+        console.log("connected to db");
+    } catch (err) {
         console.log(err.message);
-    }   
-}
+    }
+};
 connectDb();
 
-app.use('/listings',listingRouter);
-app.use('/listings/:id/reviews',reviewRouter);
-app.use('/',userRouter);
+app.use('/listings', listingRouter);
+app.use('/listings/:id/reviews', reviewRouter);
+app.use('/', userRouter);
 
+app.all("*", (req, res, next) => {
+    next(new ExpressError(404, "Page Not Found"));
+});
 
-app.all("*",(req,res,next)=>{
-    next(new ExpressError(404,"Page Not Found"));
-})
+app.use((err, req, res, next) => {
+    let { status = 500, message = "some error occurred" } = err;
+    res.status(status).render("listings/error.ejs", { message, errorCss: true });
+});
 
-app.use((err,req,res,next)=>{
-    let{status=500,message="some error occurred"} = err;
-    res.status(status).render("listings/error.ejs",{message,errorCss:true});
-})
-
-app.listen(process.env.PORT,(req,res)=>{
-    console.log("listening on port ");
-})
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+    console.log(`listening on port ${PORT}`);
+});

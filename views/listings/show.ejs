@@ -8,7 +8,7 @@
         <h1 style="margin-top: 2rem; margin-bottom: 1rem;">
             <%= listing.title %>
         </h1>
-        <h2 style="margin-bottom: 1rem;">Owner >> <%= listing.owner.username%>
+        <h2 style="margin-bottom: 1rem;">Owner >> <%= listing.ownerUsername %>
         </h2>
         <img alt="Image" src="<%= listing.image.url%>" class="showimg">
         <div class="detail">
@@ -29,7 +29,7 @@
            
         </div>
 
-        <%if(currUser && currUser._id.equals(listing.owner._id)){ %>
+        <%if(currUser && String(currUser._id) === String(listing.ownerId)){ %>
             <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE">
                 <button class="btn"><a href="/listings/<%= listing._id %>/edit">Edit</a></button>
                 <button class="btn">Delete</button>
@@ -77,13 +77,13 @@
                         <hr>
                         <div style="height: 1px; background: #000; width: 50%;"></div>
                         <hr>
-                        <%if(listing.reviews.length>0){ %>
+                        <%if(reviews.length>0){ %>
                         <div class="LeaveSection" >
                             <h2 style="align-self: center;">Reviews</h2>
                             <ul class="Reviewlist ">
-                                <% for (review of listing.reviews) { %>
+                                <% for (review of reviews) { %>
                                     <div class="eachReview">
-                                        <h3>Author : <%= review.author.username%></h3>
+                                        <h3>Author : <%= review.authorUsername %></h3>
                                         <p style="overflow-wrap:anywhere;"><%= review.comment%></p> 
                                         <p class="starability-result" data-rating="<%=review.rating%>">
                                         </p>    
