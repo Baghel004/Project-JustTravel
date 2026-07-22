@@ -55,5 +55,28 @@ Each service is independent (own `package.json` + `.env`).
    cd services/api-gateway     && npm run dev   # :8080
    ```
 
-Open http://localhost:8080. Every service exposes `GET /metrics` (Prometheus); the domain
-services also expose `GET /health`.
+Open http://localhost:8080. Every service exposes `GET /metrics` (Prometheus) and `GET /health`.
+
+## Running with Docker
+
+The whole stack builds and runs with one command. Databases stay on MongoDB Atlas (external).
+
+1. Copy the root env template and fill it in (shared `JWT_SECRET`, three Atlas DB URLs, Mapbox +
+   Cloudinary keys):
+   ```bash
+   cp .env.example .env
+   ```
+2. Build and start everything:
+   ```bash
+   docker compose up --build -d
+   ```
+3. Open http://localhost:8080. Only the gateway is published (`:8080`); the domain services are
+   reachable only on the internal compose network. Each has a healthcheck.
+
+```bash
+docker compose ps        # status + health
+docker compose logs -f   # tail logs
+docker compose down      # stop & remove
+```
+
+Each service has its own multi-stage `Dockerfile` (`node:20-alpine`, non-root, `npm ci --omit=dev`).
