@@ -1,5 +1,4 @@
 const { Schema, model } = require('mongoose');
-const Review = require('./review');
 
 const listingSchema = new Schema({
     title: {
@@ -22,12 +21,10 @@ const listingSchema = new Schema({
     country: {
         type: String,
     },
-    // Owner is referenced by id only. In the microservices split the user lives in a
-    // different service/database, so we cannot populate across it — instead we store
-    // the id (for authorization) plus the denormalized username (for display).
+    // Owner is referenced by id only (the user lives in the user-service DB, so no populate).
+    // We store the id for authorization and the denormalized username for display.
     ownerId: {
         type: Schema.Types.ObjectId,
-        ref: "User",
     },
     ownerUsername: {
         type: String,
@@ -45,15 +42,9 @@ const listingSchema = new Schema({
     },
 });
 
-// Reviews no longer live inside the listing document; they reference it by listingId.
-// On delete we cascade-remove them. (In the REST-only microservices design this hook
-// becomes a synchronous call from listing-service to review-service — see the plan's
-// cascadeDelete seam.)
-listingSchema.post("findOneAndDelete", async (listing) => {
-    if (listing) {
-        await Review.deleteMany({ listingId: listing._id });
-    }
-});
+// NOTE: the old Mongoose cascade-delete hook is gone. Reviews now live in the
+// review-service's own database, so cascade deletion is a synchronous HTTP call made
+// from the controller (see cascadeDeleteReviews in controllers/listing.js).
 
 const Listing = model("Listing", listingSchema);
 module.exports = Listing;

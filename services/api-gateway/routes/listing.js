@@ -1,27 +1,23 @@
-const express = require('express')
+const express = require('express');
 const router = express.Router();
-const Listing = require('../models/listing.js');
-const {isLoggedin,isOwner,validateListing}= require('../middleware.js');
-const listingController  = require('../controllers/listing.js')
-const multer = require('multer')
-const {storage} = require('../cloudConfig.js')
-const upload = multer({storage})
+const { isLoggedin } = require('../middleware.js');
+const listingController = require('../controllers/listing.js');
+const multer = require('multer');
+// Buffer the upload in memory so the gateway can forward it to the listing-service.
+const upload = multer({ storage: multer.memoryStorage() });
 
+router.get("/", listingController.index);
 
+router.get("/new", isLoggedin, listingController.NewRoute);
 
-router.get("/",listingController.index)
+router.post("/", isLoggedin, upload.single("listing[image]"), listingController.createRoute);
 
-router.get("/new",isLoggedin,listingController.NewRoute)
+router.get("/:id", listingController.showListing);
 
-router.post("/",isLoggedin,upload.single("listing[image]"),validateListing,listingController.createRoute)
+router.get("/:id/edit", isLoggedin, listingController.editListing);
 
+router.put("/:id", isLoggedin, upload.single("listing[image]"), listingController.updateListing);
 
-router.get("/:id",listingController.showListing)
-
-router.get("/:id/edit",isLoggedin,isOwner,listingController.editListing)
-
-router.put("/:id",isLoggedin,isOwner,upload.single("listing[image]"),validateListing,listingController.updateListing)
-
-router.delete("/:id",isLoggedin,isOwner,listingController.deleteListing)
+router.delete("/:id", isLoggedin, listingController.deleteListing);
 
 module.exports = router;

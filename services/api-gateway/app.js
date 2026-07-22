@@ -4,8 +4,6 @@ if (process.env.NODE_ENV != "production") {
 
 const express = require('express');
 const app = express();
-const mongoose = require('mongoose');
-const dbUrl = process.env.MONGO_URL;
 const path = require('path');
 const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
@@ -55,15 +53,7 @@ app.use((req, res, next) => {
     next();
 });
 
-const connectDb = async function () {
-    try {
-        await mongoose.connect(dbUrl);
-        console.log("connected to db");
-    } catch (err) {
-        console.log(err.message);
-    }
-};
-connectDb();
+// The gateway owns no database — it routes/aggregates across the domain services.
 
 app.use('/listings', listingRouter);
 app.use('/listings/:id/reviews', reviewRouter);

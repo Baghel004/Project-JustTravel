@@ -1,44 +1,59 @@
 # Wanderlust — Microservices
 
-An Airbnb-style travel listings app, being migrated from an Express monolith to a
-microservices architecture (Docker + Kubernetes on AWS EC2, CI/CD via GitHub Actions,
-monitoring via Grafana Cloud). See [`docs/MICROSERVICES-PLAN.md`](docs/MICROSERVICES-PLAN.md)
-for the full blueprint.
+An Airbnb-style travel listings app, migrated from an Express monolith to a microservices
+architecture (Docker + Kubernetes on AWS EC2, CI/CD via GitHub Actions, monitoring via
+Grafana Cloud). See [`docs/MICROSERVICES-PLAN.md`](docs/MICROSERVICES-PLAN.md) for the full blueprint.
 
 ## Services (monorepo)
 
 ```
 services/
-├── api-gateway/    Entry point: routes, JWT verification, EJS frontend,
-│                   and (until Phase 3) listings + reviews. Proxies auth to user-service.
-└── user-service/   Authentication & users. Owns its own database, issues JWTs.
+├── api-gateway/     Stateless entry point (no DB): routing, JWT verification, EJS frontend,
+│                    and cross-service aggregation. Proxies to the domain services.
+├── user-service/    Auth & users. Owns its DB. Issues JWTs.        (port 4001)
+├── listing-service/ Listings CRUD, Cloudinary uploads, Mapbox geocoding, cascade-delete
+│                    trigger. Owns its DB.                          (port 4002)
+└── review-service/  Reviews CRUD + internal bulk-delete. Owns its DB. (port 4003)
 ```
 
-## Running locally (Phase 2)
+Database-per-service (separate databases in one MongoDB Atlas cluster):
+`wanderlust_users`, `wanderlust_listings`, `wanderlust_reviews`.
 
-Each service is independent, with its own `package.json` and `.env`.
+## How it fits together
 
-1. Copy the env templates and fill them in (a real MongoDB Atlas URL, a shared `JWT_SECRET`,
-   Mapbox + Cloudinary keys for the gateway):
+- The **gateway** verifies the JWT cookie and forwards identity to services via `X-User-Id` /
+  `X-User-Name` headers. Services are internal-only and trust those headers.
+- **Auth**: gateway → user-service (issues JWT). **Listings/Reviews**: gateway proxies and, for
+  the show page, aggregates listing + reviews across two services.
+- **Cascade delete**: deleting a listing makes the listing-service call
+  `DELETE /internal/reviews?listingId=...` on the review-service (synchronous REST).
+
+## Running locally
+
+Each service is independent (own `package.json` + `.env`).
+
+1. Copy env templates and fill them in. The **`JWT_SECRET` must be identical** in the gateway
+   and user-service; each service needs its own DB URL.
    ```bash
-   cp services/user-service/.env.example services/user-service/.env
-   cp services/api-gateway/.env.example  services/api-gateway/.env
+   for s in api-gateway user-service listing-service review-service; do
+     cp services/$s/.env.example services/$s/.env
+   done
    ```
-   The `JWT_SECRET` **must be identical** in both (user-service signs, gateway verifies).
 
 2. Install dependencies (once per service):
    ```bash
-   (cd services/user-service && npm install)
-   (cd services/api-gateway  && npm install)
+   for s in api-gateway user-service listing-service review-service; do
+     (cd services/$s && npm install)
+   done
    ```
 
-3. Start both (separate terminals):
+3. Start all four (separate terminals):
    ```bash
-   cd services/user-service && npm run dev   # http://localhost:4001
-   cd services/api-gateway  && npm run dev   # http://localhost:8080
+   cd services/user-service    && npm run dev   # :4001
+   cd services/listing-service && npm run dev   # :4002
+   cd services/review-service  && npm run dev   # :4003
+   cd services/api-gateway     && npm run dev   # :8080
    ```
 
-Open http://localhost:8080. Signup/login flow through the gateway to the user-service;
-listings/reviews are still served by the gateway (extracted in Phase 3).
-
-Each service exposes `GET /metrics` (Prometheus) and the user-service also `GET /health`.
+Open http://localhost:8080. Every service exposes `GET /metrics` (Prometheus); the domain
+services also expose `GET /health`.
