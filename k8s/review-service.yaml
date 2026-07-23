@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: review-service
+  namespace: wanderlust
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: review-service
+  template:
+    metadata:
+      labels:
+        app: review-service
+    spec:
+      containers:
+        - name: review-service
+          image: ghcr.io/baghel004/wanderlust-review-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4003
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "4003"
+            - name: REVIEWS_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: wanderlust-secrets
+                  key: REVIEWS_DB_URL
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4003
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4003
+            initialDelaySeconds: 25
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: review-service
+  namespace: wanderlust
+spec:
+  selector:
+    app: review-service
+  ports:
+    - port: 4003
+      targetPort: 4003
