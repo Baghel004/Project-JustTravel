@@ -24,8 +24,11 @@ Legend: 🖥️ = run on your **local machine**, ☁️ = run **on the EC2 insta
 
 ## 1. 🖥️ Build & push images to GHCR
 
-The k8s manifests pull `ghcr.io/baghel004/wanderlust-<service>:latest`. Push them once (Phase 7
-will automate this):
+> **If the Phase 7 CI/CD pipeline has already run, skip this section** — the images are already on
+> GHCR (built and pushed by GitHub Actions) and made public. This manual step is only for the very
+> first deploy *before* CI is wired up.
+
+The k8s manifests pull `ghcr.io/baghel004/wanderlust-<service>:latest`. To push them by hand:
 
 ```bash
 # a) Login to GHCR with a Personal Access Token (classic) that has: write:packages
@@ -55,7 +58,9 @@ Troubleshooting.)
    - Key pair: create/download one (e.g. `wanderlust-key.pem`)
    - Storage: **30 GB gp3**
 2. **Security group** (inbound rules):
-   - SSH `22` — **Source: My IP** (not 0.0.0.0/0)
+   - SSH `22` — **Source: `0.0.0.0/0`** — required so the GitHub Actions deploy job (dynamic
+     runner IPs) can SSH in. It's key-only auth, so acceptable for a portfolio; tighten later
+     (restrict to your IP + a self-hosted runner or SSM) if you want.
    - HTTP `80` — `0.0.0.0/0`
    - HTTPS `443` — `0.0.0.0/0`
 3. Launch. Then **Elastic IP → Allocate → Associate** with this instance (stable public IP that

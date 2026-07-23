@@ -2,5 +2,6 @@
 init/
 node_modules/
 
-# Kubernetes secret with real values (only secret.example.yaml is committed)
+# Kubernetes secrets with real values (only *.example.yaml are committed)
 k8s/secret.yaml
+k8s/monitoring/grafana-secret.yaml
