@@ -1,0 +1,87 @@
+# Grafana Alloy — scrapes each service's /metrics and remote-writes to Grafana Cloud.
+# Static targets (service DNS in this namespace) → no Kubernetes RBAC needed, minimal RAM.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: wanderlust
+data:
+  config.alloy: |
+    // Scrape the four Wanderlust services (each exposes /metrics with a `service` label).
+    prometheus.scrape "wanderlust" {
+      targets = [
+        { "__address__" = "user-service:4001" },
+        { "__address__" = "listing-service:4002" },
+        { "__address__" = "review-service:4003" },
+        { "__address__" = "api-gateway:8080" },
+      ]
+      metrics_path   = "/metrics"
+      scrape_interval = "30s"
+      forward_to     = [prometheus.remote_write.grafanacloud.receiver]
+    }
+
+    // Ship them to Grafana Cloud's hosted Prometheus.
+    prometheus.remote_write "grafanacloud" {
+      endpoint {
+        url = sys.env("GRAFANA_CLOUD_PROM_URL")
+        basic_auth {
+          username = sys.env("GRAFANA_CLOUD_PROM_USER")
+          password = sys.env("GRAFANA_CLOUD_API_KEY")
+        }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alloy
+  namespace: wanderlust
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alloy
+  template:
+    metadata:
+      labels:
+        app: alloy
+    spec:
+      containers:
+        - name: alloy
+          image: grafana/alloy:v1.5.1
+          args:
+            - run
+            - /etc/alloy/config.alloy
+            - --server.http.listen-addr=0.0.0.0:12345
+          ports:
+            - containerPort: 12345
+              name: http
+          env:
+            - name: GRAFANA_CLOUD_PROM_URL
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-cloud
+                  key: GRAFANA_CLOUD_PROM_URL
+            - name: GRAFANA_CLOUD_PROM_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-cloud
+                  key: GRAFANA_CLOUD_PROM_USER
+            - name: GRAFANA_CLOUD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-cloud
+                  key: GRAFANA_CLOUD_API_KEY
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+      volumes:
+        - name: config
+          configMap:
+            name: alloy-config
