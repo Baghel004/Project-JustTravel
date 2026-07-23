@@ -1,0 +1,114 @@
+name: CI/CD
+
+# Build only the services that changed, push their images to GHCR, then roll them
+# out on the k3s cluster. Path-filtering keeps GitHub Actions minutes (and build time) low.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/**'
+      - '.github/workflows/ci-cd.yml'
+  workflow_dispatch: {} # manual run builds/deploys ALL services
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Work out which services changed (or all, on a manual run)
+  # ---------------------------------------------------------------------------
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.set.outputs.services }} # JSON array, for the build matrix
+      list: ${{ steps.set.outputs.list }}         # space-separated, for the deploy loop
+      owner: ${{ steps.owner.outputs.owner }}     # lowercased GHCR namespace
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api-gateway: 'services/api-gateway/**'
+            user-service: 'services/user-service/**'
+            listing-service: 'services/listing-service/**'
+            review-service: 'services/review-service/**'
+      - id: set
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo 'services=["api-gateway","user-service","listing-service","review-service"]' >> "$GITHUB_OUTPUT"
+            echo 'list=api-gateway user-service listing-service review-service' >> "$GITHUB_OUTPUT"
+          else
+            echo 'services=${{ steps.filter.outputs.changes }}' >> "$GITHUB_OUTPUT"
+            echo "list=$(echo '${{ steps.filter.outputs.changes }}' | jq -r 'join(" ")')" >> "$GITHUB_OUTPUT"
+          fi
+      - id: owner
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+  # ---------------------------------------------------------------------------
+  # 2. Validate + build + push each changed service (one matrix leg per service)
+  # ---------------------------------------------------------------------------
+  build:
+    needs: changes
+    if: needs.changes.outputs.services != '[]' && needs.changes.outputs.services != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Test + syntax validate
+        working-directory: services/${{ matrix.service }}
+        run: |
+          npm test
+          for f in $(find . -name '*.js' -not -path './node_modules/*'); do node --check "$f"; done
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: services/${{ matrix.service }}
+          push: true
+          tags: |
+            ghcr.io/${{ needs.changes.outputs.owner }}/wanderlust-${{ matrix.service }}:latest
+            ghcr.io/${{ needs.changes.outputs.owner }}/wanderlust-${{ matrix.service }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ---------------------------------------------------------------------------
+  # 3. Roll out the new images on the k3s cluster over SSH
+  # ---------------------------------------------------------------------------
+  deploy:
+    needs: [changes, build]
+    if: needs.changes.outputs.services != '[]' && needs.changes.outputs.services != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Roll out changed services on k3s
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          SERVICES: ${{ needs.changes.outputs.list }}
+          SHA: ${{ github.sha }}
+          OWNER: ${{ needs.changes.outputs.owner }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: SERVICES,SHA,OWNER
+          script: |
+            export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+            for s in $SERVICES; do
+              echo "Deploying $s -> :$SHA"
+              kubectl -n wanderlust set image deployment/$s $s=ghcr.io/$OWNER/wanderlust-$s:$SHA
+              kubectl -n wanderlust rollout status deployment/$s --timeout=150s
+            done
